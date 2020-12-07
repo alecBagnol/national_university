@@ -1,6 +1,7 @@
 intro_cs/.ipynb_checkpoints/
-
 intro_cs/project/tracknet/
 intro_cs/project/tracknet/TrackNetMirror/
 intro_cs/project/soccer/
 intro_cs/project/soccer/images/
+.tmp.drivedownload/*
+.tmp.drivedownload/
