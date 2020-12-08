@@ -1,14 +1,29 @@
 import pygame
 import sys
 
-pygame.init() #inicia el entorno de pygame
-screen = pygame.display.set_mode([400,400])#inicializando la pantalla
+#inicia el entorno de pygame
+pygame.init() 
 
-pygame.display.set_caption("Bricks") #le da nombre a la ventan
+#inicializando la pantalla
+screen = pygame.display.set_mode([400,400])
+
+#le da nombre a la ventana
+pygame.display.set_caption("Bricks") 
 
 r = pygame.Color("red")
 w = pygame.Color("white")
+b = pygame.Color("blue")
 black = pygame.Color("black")
+
+# bg = pygame.Surface(screen.get_size())
+bg = pygame.Surface((225,150))
+bg = bg.convert()
+# bg.fill(blue)
+
+bg_location = [50,50]
+bg_y_momentum = 0
+L_move = False
+R_move = False
 
 data = [
     [ w, w, r, r, r, r, r, w, w ],
@@ -21,17 +36,30 @@ data = [
 
 for y, row in enumerate(data):
     for x, colour in enumerate(row):
-        rect = pygame.Rect(x*25,y*25,25,25)
-        screen.fill(colour, rect=rect)
+        if colour == r:
+            rect = pygame.Rect(x*25,y*25,25,25)
+            bg.fill(colour, rect=rect)
 
 
 # player_img = pygame.image.load('path')
-L_move = False
-R_move = False
+
 
 while True:
     #blit pone una superficie sobre otra superficie
     # screen.blit(player_img, (50,50)) 
+    screen.fill(black) #elimina el trail de la imagen cargada
+    screen.blit(bg, bg_location)
+
+    if bg_location[1] > screen.get_size()[1] - bg.get_height():
+        bg_y_momentum = -bg_y_momentum
+    else:
+        bg_y_momentum += 0.2
+    bg_location[1] += bg_y_momentum
+
+    if L_move == True:
+        bg_location[0] += 4
+    if R_move == True:
+        bg_location[0] -= 4
 
     for event in pygame.event.get(): #loop de eventos
         if event.type == pygame.QUIT: #evento de cierre de ventana
@@ -41,7 +69,6 @@ while True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
                 R_move = True
-                screen.fill(black)
             if event.key == pygame.K_LEFT:
                 L_move = True
         
