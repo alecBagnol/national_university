@@ -1,7 +1,8 @@
 # Game development approach
 
+<img src="https://raw.githubusercontent.com/alecBagnol/national_university/master/intro_cs/project/pictures/screenshot.png">
 
-### This is an aproximation to dealing with physics and other things related to creating a game, particularly a platformer, in order to build a better understanding and for future reference.
+### This is an aproximation to dealing with physics and other things related to creating a game, particularly a platformer; all in order to build a better understanding and for future reference.
 
 First, I had to deal with how to place images and render them correctly on the screen, and I went with the pixel by pixel approach, loading an image and doing pixel operations like scaling an then taking them to the pygame canvas.
 
