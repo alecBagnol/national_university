@@ -17,9 +17,9 @@ def img_std(self):
         self.surf = pygame.Surface((self.w, self.h))
         self.img_topixel(self.img, self.surf)
 ```
-Once I had the image matrix data, I just went by looping the array and drawing rectangles taking into account an scale index called in this case ratio and the setting it into a pygame canvas.
+Once I had the image matrix data, I just went by looping the array and drawing rectangles, taking into account an scale index called in this case *ratio* and then setting it into a pygame surface.
 
-Initially I thought that setting a color key for making exceptions at the momment of drawing a pixel in the pygames canvas could make a difference, but the thing is that it seems Pygame set a surface with a solid alpha index, making it necessary to tell the interface that I was loading a transparent graphic by setting the alph to 0, or setting a color_key.
+Initially I thought that setting a color key for making exceptions at the momment of drawing a pixel in a pygames surface could make a difference, but the thing is that it seems Pygame set a surface with a solid alpha index of 255, and so i had to tell the interface that I was loading a transparent graphic by setting the alpha to 0, or setting a color_key.
 ```python
 for y, row in enumerate(cvimage):
         for x, col in enumerate(row):
@@ -31,18 +31,19 @@ for y, row in enumerate(cvimage):
     surface.set_colorkey([0,0,0])
 ```
 
-I had the idea of creating a class to load the image and then with the graphic loaded within an object I could manipulate it with more flexibility but initially I didn't take into account the frame rates and how much the game time would differ from the real time for managing animations among others. So in order no just to improve my understanding of classes but to better structure the game data, I'll have to re-structure in general the graphics and terrain classes.
+I had the idea of creating a class to load the images and then with the graphic loaded within an object I could manipulate it with more flexibility, but initially I didn't take into account the frame rates and how much the game time would differ from the real time for managing animations among others. So in order not just to improve my understanding of classes but to better structure the game data, I'll have to re-structure in general the graphics and terrain classes.
 
 ### *"Think in framerates, not in seconds"*
 
-I also went by the idea of creating my own collision detection method for the graphic object class. the basic idea is that every graphic has to be within a rectangle and that the coordinates, width and heigh of the picture could form and help to differentiate the object bounds.
+I also went by the idea of creating my own collision detection method for the graphic object class. The idea behind was that every graphic has to be within a rectangle,  and that the possition coordinates, and width and heigh of the picture could form and help to differentiate the object bounds.
 
 So if two bounding areas *a* and *b* came in contact with each other, they will tell by referencing the bounding possition as accordingly with the next logic:
 ``` python
-if a_x < b_x + b_ancho and a_x + a_ancho > b_x and a_y < b_y + b_alto and a_y + a_alto > b_y 
+if a_x < b_x + b_width and a_x + a_width > b_x and a_y < b_y + b_height and a_y + a_height > b_y: 
+    #Collision logic
 ```
 
-I then went by exploring how to render the terrain...I though that putting just an image and setting imaginary bounding areas will do the trick but how wrong I was...
+I then went by exploring how to render the terrain...I though that placing an image and setting imaginary bounding areas will do the trick but how wrong I was...
 I then came to the conclusion *(and after referencing some work on how game devs rendered tiles)* that it could be best to load the tiles by using a "Tile Map".
 ```python
 simple_terrain = Terrain(2, [screen_w, screen_h])
@@ -119,10 +120,18 @@ if jump_around:
         character.animation_jump(frame_counter)
     jump_counter += 1
 ```
-I end up using a sort of approach to the Kinetic Energy equation: 
+After iterating some ideas, I end up using a approach to the Kinetic Energy equation: 
 ># <img src="https://render.githubusercontent.com/render/math?math=KE = \frac{1}{2} mv^{2}">
-This with an index that once velocity reached 0 it will stop the jump execution and let the general "gravity" take over the character, all this with the idea of creating a different motion perception, similar to what Mario from Super Mario Bros does.
+```python
+self.pos[1] -= (0.5*self.mass*(self.vel**2))*self.y_index
+```
+This with an index that once velocity reached 0 it will stop the jump execution and let the general *"gravity"* take over the character, all this with the idea of creating a different motion perception, similar to what Mario from Super Mario Bros does.
 
-All ok until you have to take into account the animation... and that's something I'm still figuring out.. how to match the jumping stages with the framerate of a determined animation given to an action. At the moment I'm taking into account the general framerate speed of 60 frames per second (Given by the clock method in pygame) and operating it with an integer division in order to get a change of sprite in a given number of frames.
-
+All ok until you have to take into account the animation... and that's something I'm still figuring out.. how to match the jumping stages with the framerate of a determined animation given to an action. At the moment I'm taking into account the general framerate speed of 60 frames per seconds *(Given by the clock method in pygame)* and operating it with an integer division in order to get a change of sprite in a given number of frames.
+```python
+frame_counter = jump_counter//5
+...
+if jump_counter % 5 == 0:
+    ...
+```
 That conditional will keep changing up the frames until the final frame index is reached, and once that final frame is reached, it will restart the animation.
