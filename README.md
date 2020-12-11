@@ -135,3 +135,13 @@ if jump_counter % 5 == 0:
     ...
 ```
 That conditional will keep changing up the frames until the final frame index is reached, and once that final frame is reached, it will restart the animation.
+
+
+## Whats Next?
+- Make a way to deal a "damage" counter and make more interactions between objects.
+- Keep improving the physics in order to develop a method to match perfectly animations with actions.
+- Improve collision system to make it more reliable and to work with vertical collisions as well.
+- Re-structure the classes and organize them accordingly with a more specific meta.
+- Evaluate an execute camera dynamics.
+
+- Even more things to determine ... 
