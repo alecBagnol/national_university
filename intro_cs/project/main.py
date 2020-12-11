@@ -22,39 +22,46 @@ pygame.display.set_caption("Bricks")
 class Graphic:
     def __init__ (self, pic_path, ratio=1, pos=[0,0], key=[0,255,0],has_gravity=False):
         self.pic_path = pic_path
-        self.img = cv.imread(self.pic_path)
         self.ratio = ratio
         self.key = key
         self.pos = pos
         self.has_gravity = has_gravity
         self.is_jumping = False
         self.collision = False
+        self.ammo = []
+
+        self.frame_jump = 0
+        self.time_e = 1
 
     def set_variables(self):
         self.velinit = 8
         self.vel = self.velinit
         self.mass = 0.5
         self.y_index = 1
-        self.shape = self.img.shape
-        self.w = self.shape[1] * self.ratio
-        self.h = self.shape[0] * self.ratio
-        self.surf = pygame.Surface((self.w, self.h))
 
-    def img_topixel(self):
-        for y, row in enumerate(self.img):
+    def img_topixel(self, cvimage, surface):
+        for y, row in enumerate(cvimage):
             for x, col in enumerate(row):
                 color_rgb = list(col)
                 if color_rgb != self.key:
                     rect = pygame.Rect(x*self.ratio,y*self.ratio,self.ratio,self.ratio)
                     colour = (color_rgb[2],color_rgb[1],color_rgb[0])
-                    self.surf.fill(colour, rect=rect)
-        self.surf.set_colorkey([0,0,0])
+                    surface.fill(colour, rect=rect)
+        surface.set_colorkey([0,0,0])
+    
+    def img_std(self):
+        self.img = cv.imread(self.pic_path)
+        self.shape = self.img.shape
+        self.w = self.shape[1] * self.ratio
+        self.h = self.shape[0] * self.ratio
+        self.surf = pygame.Surface((self.w, self.h))
+        self.img_topixel(self.img, self.surf)
 
     def bounding(self):
         self.bounding_area = pygame.Rect(self.pos[0], self.pos[1], self.w, self.h)       
 
     def graphic_to(self, layer):
-        self.jump()
+        # self.jump()
         layer.blit(self.surf, self.pos)
 
     def img_mov(self,axis, quantity):
@@ -62,38 +69,54 @@ class Graphic:
             self.pos[0] -= quantity
         if axis == 'R':
             self.pos[0] += quantity
-        if axis == 'D':
-            self.pos[1] += quantity
     
-    def jump(self):
-        if self.is_jumping:
-            if self.vel != 0:
-                # if self.y_index == -1 and self.collision:
-                #     self.is_jumping = False
-                #     self.y_index = 1
-                #     self.vel = self.velinit
-                # else:
-                self.pos[1] -= (0.5*self.mass*(self.vel**2))*self.y_index
-                self.vel -= 0.5
-                
-                
-            # elif self.vel != self.velinit and self.y_index == 1:
-                # self.y_index = -1
-                # self.vel = self.velinit
-            else:
-                self.is_jumping = False
-                # self.y_index = 1
-                # self.vel = self.velinit
-            
+    def load_jump_animation(self, path):
+        self.jump_img = cv.imread(path)
+        self.jump_shape = self.jump_img.shape
+        self.jump_w = self.jump_shape[1] * self.ratio
+        self.jump_h = self.jump_shape[0] * self.ratio
+        self.jump_surf = pygame.Surface((self.jump_w, self.jump_h))
+        self.img_topixel(self.jump_img, self.jump_surf)
 
-    def reset(self):
-        pass
+    def blink(self, surface):
+        empty = pygame.Color(0,0,0,0)
+        surface.fill(empty)
+
+    def jump(self):
+        if self.vel != 0:
+            self.pos[1] -= (0.5*self.mass*(self.vel**2))*self.y_index
+            self.vel -= 0.5
+        else:
+            self.is_jumping = False
+        
+    def animation_jump(self, count):
+        self.blink(self.surf)
+        self.jump_pos = [-self.w * count, 0]
+        self.surf.blit(self.jump_surf, self.jump_pos)
 
     def initialize(self):
         self.set_variables()
-        self.img_topixel()
+        self.img_std()
         self.bounding()
 
+    def load_rock(self, path):
+        self.rock_img = cv.imread(path)
+        self.rock_shape = self.rock_img.shape
+        self.rock_w = self.rock_shape[1] * self.ratio
+        self.rock_h = self.rock_shape[0] * self.ratio
+        self.rock_surf = pygame.Surface((self.rock_w, self.rock_h))
+        self.img_topixel(self.rock_img, self.rock_surf)
+    
+    def throw_rock(self, layer, coord):
+        item = []
+        new_s = pygame.Surface([16,16])
+        new_s.blit(self.rock_surf, [0,0])
+        new_s.convert_alpha()
+        item.append(new_s)
+        item.append(coord)
+        self.ammo.append(item)
+        layer.blit(self.ammo[len(self.ammo)-1][0], coord)
+    
 
 class Terrain:
     def __init__(self, ratio,windows_size):
@@ -155,18 +178,25 @@ class Terrain:
             img.graphic_to(layer)
 
 
+
 r = pygame.Color("red")
 w = pygame.Color("white")
 b = pygame.Color("blue")
 black = pygame.Color("black")
 
 
-hut = Graphic('pictures/hut.png',2,[-80,250],[0,255,0], True)
+hut = Graphic('pictures/hut.png',2,[-80,250],[0,255,0])
 hut.initialize()
 hut.pos = [-150, screen_h - hut.h - 6]
 
-character = Graphic('pictures/Owlet_Monster.png',2,[200,50],[0,0,0], True)
+character = Graphic('pictures/Owl.png',2,[200,50],[0,0,0], True)
 character.initialize()
+character.load_jump_animation('pictures/Owl_jump.png')
+character.load_rock('pictures/Rock1.png')
+
+
+# pygame way
+# npc_a = pygame.image.load('')
 
 
 
@@ -177,6 +207,14 @@ tile_sss = Graphic('pictures/Tile_40.png')
 tile_ggg = Graphic('pictures/Tile_02.png')
 tile_ssg = Graphic('pictures/Tile_50.png')
 tile_no = Graphic('pictures/transparent.png')
+
+background = pygame.image.load('pictures/Background.png')
+background = pygame.transform.scale(background,[640,448])
+
+bloated = pygame.image.load('pictures/Big_bloated_walk.png')
+bloated = pygame.transform.scale2x(bloated)
+bloated_surf = pygame.Surface([144,144])
+
 
 simple_terrain.tile(tile_sgs)
 simple_terrain.tile(tile_sss)
@@ -213,31 +251,80 @@ def move_action(w,x,z):
         if R_move:
             character.img_mov('R', x)
         if U_move:
-            if not character.is_jumping:
-                character.is_jumping = True
+            character.is_jumping = True
         if D_move:
             character.img_mov('D', z)
+    
 
-g = 0.5
-vo = 0
-t = 0
+def throwing():
+    coord = coorde()
+    new_s = pygame.Surface([16,16])
+    new_s.blit(character.rock_surf, [0,0])
+    character.ammo.append([new_s,coord])
+    screen.blit(character.ammo[len(character.ammo)-1][0], coord)
+
+
+def coorde():
+    x_char = character.pos[0] + 32
+    y_char = character.pos[1] + 32
+    return [x_char, y_char]
+
+jump_around = False
+clock = pygame.time.Clock()
+jump_counter = 0
+
+
+throw_rock = False
+rock_counter = 0
+
+tic = 1
+xfact = 1
+x_blot = 0
 
 while True:
+    clock.tick(60) #fps
     screen.fill(b) #elimina el trail de la imagen cargada
-    
+    screen.blit(background,[0,0])
     simple_terrain.mapping(data,screen)
     hut.graphic_to(screen)
+    bloated_surf.fill([0,0,0,0])
+    bloated_surf.blit(bloated, [-xfact,0])
+    bloated_surf.set_colorkey([0,0,0])
+    screen.blit(bloated_surf, [500-x_blot,245])
+
     character.graphic_to(screen)
+    tic += 1
+    if tic % 10 == 0:
+        xfact += 144
+        x_blot += 6
+    if tic == 60:
+        tic = 0
+        xfact = 0
+    if x_blot > 350:
+        x_blot -= 6 
 
 
-    # if bg_pos[1] > screen.get_size()[1] - bg.get_height():
-    #     bg_y_momentum = -bg_y_momentum
-    # else:
-    #     bg_y_momentum += 0.2
-    # bg_pos[1] += bg_y_momentum
+    if jump_around:
+        character.jump()
+        frame_counter = jump_counter//5
 
+        if frame_counter > 7:
+                frame_counter = 0
+                jump_counter = 0
+                jump_around = False
 
-    # bg_rect.y = bg_pos[1]
+        if jump_counter % 5 == 0:
+            character.animation_jump(frame_counter)
+        jump_counter += 1
+
+    
+    for i, rock in enumerate(character.ammo):
+        rock[1][0] += 10
+        # rock[1][1] += 5
+        if rock[1][1] > (448-64):
+            character.ammo.pop(i)
+        screen.blit(rock[0], rock[1])
+
 
     if simple_terrain.collide_test(character):
         pygame.draw.rect(screen,r,test_rect)
@@ -249,38 +336,36 @@ while True:
         character.collision = False
 
     if not character.collision and not character.is_jumping:
-        # yo = character.pos[1]
-        # y = yo + vo*t + 0.5*g*(t**2)
-        # t += .5
-        # vo = vo + g*t
         if character.vel != character.velinit:
             character.vel += 0.5
         else:
             character.is_jumping = False
         
         character.pos[1] += (0.5*character.mass*(character.vel**2))*character.y_index
-        # self.vel -= 0.5
 
-        # character.pos[1] = y
     elif character.collision and not character.is_jumping:
         character.vel = character.velinit
-        # vo = 0
-        # t = 0
 
     for event in pygame.event.get(): #loop de eventos
         if event.type == pygame.QUIT: #evento de cierre de ventana
             pygame.quit() #primero para pygame
             sys.exit() #detiene el script
-        
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
                 R_move = True
             if event.key == pygame.K_LEFT:
                 L_move = True
             if event.key == pygame.K_UP:
-                U_move = True
-            if event.key == pygame.K_DOWN:
-                D_move = True
+                
+                if jump_around:
+                    U_move = False
+                else:
+                    U_move = True
+                    jump_around = True
+            if event.key == pygame.K_SPACE:
+                throwing()
+
         
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_RIGHT:
@@ -289,10 +374,8 @@ while True:
                 L_move = False
             if event.key == pygame.K_UP:
                 U_move = False
-            if event.key == pygame.K_DOWN:
-                D_move = False
 
     
     pygame.display.update() #actualizar el display, no se actualiza hasta que no se llama este metodo
-    pygame.time.Clock().tick(60) #fps
+    
 
